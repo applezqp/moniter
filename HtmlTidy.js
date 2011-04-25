@@ -382,7 +382,6 @@ function extend(){
 	}
 	return arguments[0];
 }
-
 function ajax(option) {
 	var xhr = false;
 	try {
@@ -426,6 +425,14 @@ function ajax(option) {
 	opt.type == 'POST' ? xhr.send(opt.content) : xhr.send(null);
 }
 
+function jsonp(url){
+	var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = url+ '&' + Math.random();
+    script.charset = "UTF-8";
+	var _head=document.getElementsByTagName("head")[0];
+	_head.appendChild(script);
+}
 function each(ele, fun){
 	var i=0, len=ele.length;
 	if(!len) return;
@@ -434,6 +441,18 @@ function each(ele, fun){
 	}
 }
 
+function sendForm() {
+	// var _form = document.createElement('form');
+	//     _form.name = 'monitor';
+	// 	_form.action = '';
+	//     script.src = url+ '&' + Math.random();
+	//     script.charset = "UTF-8";
+	// 	var _head=document.getElementsByTagName("head")[0];
+	// 	_head.appendChild(script);
+	// 	
+	// 	<form name="bankCardForm" id="bankCardForm" action="bankCardForm.htm" method="post">
+	
+};
 function allTrue(arr) {
 	if (arr.length == 0) {
 		return true;
@@ -526,7 +545,30 @@ function unique (arr) {
 	}
 	return uni;
 }
-
+/*
+ * object to string
+ * 
+ */
+function obj2str(o){
+    var r = [];
+    if(typeof o =="string") return "\""+o.replace(/([\'\"\\])/g,"\\$1").replace(/(\n)/g,"\\n").replace(/(\r)/g,"\\r").replace(/(\t)/g,"\\t")+"\"";
+    if(typeof o == "object"){
+        if(!o.sort){
+            for(var i in o)
+                r.push(i+":"+obj2str(o[i]));
+            if(!!document.all && !/^\n?function\s*toString\(\)\s*\{\n?\s*\[native code\]\n?\s*\}\n?\s*$/.test(o.toString)){
+                r.push("toString:"+o.toString.toString());
+            }
+            r="{"+r.join()+"}"
+        }else{
+            for(var i =0;i<o.length;i++)
+                r.push(obj2str(o[i]))
+            r="["+r.join()+"]"
+        }
+        return r;
+    }
+    return o.toString();
+}
 /*******************End***************************/
 
 var tidy = window.tidy = {};
@@ -534,10 +576,15 @@ var tidy = window.tidy = {};
 var win = window, doc = document; 
 
 var result = {
+	/*
+	 * 返回结果
+	 * 
+	 */
 	url: '', 
 	score: 100,
 	errors: [],
-	warnings: []
+	warnings: [],
+	UserAgent:""
 }, loaded = {
 	html: false,
 	js: [],
@@ -589,7 +636,6 @@ tidy.getCss = function(){
 			data.cssnum ++;
 		}
 	});
-
 };
 
 tidy.getImg = function(){
@@ -812,9 +858,7 @@ tidy.checkRules = {
 			});
 			result.score -= rulesScore['noDupId']['score'];
 		}
-
 	},
-
 	checkBlockInline: function(){	
 		var pass = true, 
 			r1, r2, sr1, sr2;
@@ -843,7 +887,6 @@ tidy.checkRules = {
 			result.score -= rulesScore['blockInline']['score'];
 		}
 	},
-
 	checkImgAttr: function(){
 		var pass1 = pass2 = 0, ln, code;
 		each(data.doc.getElementsByTagName('img'), function (o,i) {
@@ -1090,17 +1133,16 @@ tidy.check = function(){
 };
 
 tidy.sendStatic = function(){
-
+	
 }
 
-tidy.sendResult = function(){
+tidy.generateData = function(){
 	result.js = data.js;
 	result.css = data.css;
 	result.img = data.img;
 	/*ajax({
 		url: MonitorResult.php,
 		success: function(){
-
 		},
 		fail: function(){
 		}
@@ -1134,9 +1176,121 @@ tidy.sendResult = function(){
 	}
 	
 	doc.getElementById('MonitorResult').innerHTML = str;
-
+	//tidy.sendResult(str);
 };
-
+tidy.sendResult=function(str) {
+	/*
+	 * tidyResult.gif 页面初次载入时,发送的数据
+	 * 
+	 * @params
+	 * URL:"http://www.alipay.com/i.htm",
+	 * A:user agent
+	 * TE:{
+	 * 	{id:12,ln:},
+	 *  {},
+	 *  {} 	
+	 * }
+	 * C:css urls
+	 * J:js urls
+	 * I:img urls
+	 */
+	var _sampleResult={
+		URL:"http://www.alipay.com/i.htm",	//当前url
+		A:"Mozilla 20110318052756 5.0 (Macintosh)", //user Agent
+		TE:[ //tidy error校验规则
+			{
+				id:2,
+				ln:56,
+				code:"<div id='submit'></div>"
+			},
+			{
+				id:5,
+				ln:56,
+				code:"<input type='text' id='id' />"
+			},
+			{
+				id:1,
+				ln:56,
+				code:"<div id='submit'></div>"
+			},
+			{
+				id:7,
+				ln:56,
+				code:"<div id='submit'></div>"
+			},
+			{
+				id:2,
+				ln:56,
+				code:"<div id='submit'></div>"
+			},
+			{
+				id:5,
+				ln:56,
+				code:"<input type='text' id='id' />"
+			},
+			{
+				id:1,
+				ln:56,
+				code:"<div id='submit'></div>"
+			},
+			{
+				id:7,
+				ln:56,
+				code:"<div id='submit'></div>"
+			},
+			{
+				id:2,
+				ln:56,
+				code:"<div id='submit'></div>"
+			},
+			{
+				id:5,
+				ln:56,
+				code:"<input type='text' id='id' />"
+			},
+			{
+				id:1,
+				ln:56,
+				code:"<div id='submit'></div>"
+			},
+			{
+				id:7,
+				ln:56,
+				code:"<div id='submit'></div>"
+			}
+		],
+		C:url.css,
+		J:url.js,
+		I:url.img
+	};
+//	console.log(compress(encodeURI(obj2str(_sampleResult))));
+	console.log(_sampleResult);
+	
+	var _tUrl="http://ecmng.sit.alipay.net:7788/"+"?"+encodeURI(compress(obj2str(_sampleResult)));
+	console.log(_tUrl);
+	
+	if(true){
+		//jsonp发送
+		jsonp(_tUrl);
+	}else{
+		//form发送
+		//sendForm(obj2str(_sampleResult));
+	}
+	
+	
+	/*
+	 * ErrorResult 脚本异常时,发送的数据
+	 *
+	 * @params
+	 * URL:location href
+	 * UA:user agent
+	 * msg:页面错误信息
+	 * file:文件
+	 * ln:错误行号
+	 * id:identify this error
+	 */
+	
+};
 
 
 var initialize = false;
@@ -1152,6 +1306,7 @@ tidy.init = function(){
 			clearInterval(tidy.timer);
 			tidy.parse();
 			tidy.check();	
+			tidy.generateData();
 			tidy.sendResult();
 		}
 	}, 100);	
@@ -1160,3 +1315,5 @@ tidy.init = function(){
 tidy.init();
 
 })()
+
+
