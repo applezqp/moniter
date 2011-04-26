@@ -346,10 +346,12 @@ this.HTMLtoDOM = function( html, doc ) {
 		},
 		chars: function( text ) {
 			results += text;
-			if(curParentNode.nodeName.toLowerCase() == 'style' || curParentNode.nodeName.toLowerCase() == 'script')
-				return;
+			if(curParentNode){
+				if(curParentNode.nodeName.toLowerCase() == 'style' || curParentNode.nodeName.toLowerCase() == 'script')
+					return;
 
-			curParentNode.appendChild( doc.createTextNode( text ) );
+				curParentNode.appendChild( doc.createTextNode( text ) );
+			}
 		},
 		comment: function( text ) {
 			// create comment node
@@ -469,9 +471,12 @@ function allTrue(arr) {
 }
 
 function htmlEncode(str){
-	str = str.replace(/</g, '&lt;');
-	str = str.replace(/>/g, '&gt;');
-	return str;
+	var entities = {
+            '<': '&lt;',
+            '>': '&gt;',
+            '&': '&amp;'
+        };
+	return str.replace(/[<>&]/g, function (m) { return entities[m]; })
 }
 
 function getLn(str){
@@ -759,7 +764,7 @@ tidy.checkRules = {
 		var pass = true, ln,
 			scripts = data.doc.getElementsByTagName('script');
 		each(scripts, function(o, i){
-			if(!o.getAttribute('charset')){
+			if(o.getAttribute('src') && !o.getAttribute('charset')){
 				ln = data.ln + elemLn(o)
 				result.errors.push({
 					'ln': ln,
@@ -777,7 +782,7 @@ tidy.checkRules = {
 		var pass = true, ln,
 			links = doc.getElementsByTagName('link');
 		each(links, function(o, i){
-			if(!o.getAttribute('charset')){
+			if(o.getAttribute('href') && !o.getAttribute('charset')){
 				ln = data.ln + elemLn(o)
 				result.errors.push({
 					'ln': ln,

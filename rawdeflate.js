@@ -1678,7 +1678,7 @@ onconnect = function sharedWorker(e) {
   };
 };
 
-$ = function(id){ return document.getElementById(id) };
+var $id = function(id){ return document.getElementById(id) };
 
 if(!window.btoa) {
     window.btoa  = function(text) {
@@ -1786,7 +1786,7 @@ Base64 = {
 var t0;
 function done_deflating(e) {
   var t1 = new Date;
-  //$('deflated').value = Base64.encode(e.data);
+  //$id('deflated').value = Base64.encode(e.data);
   return Base64.encode(e.data);
   //update_sizes(null, t1 - t0);
 }
@@ -1801,8 +1801,8 @@ function compress(s) {
 }
 
 function update_sizes(it, dt) {
-  var szi = $('szi'), inf = $('inflated'); it = it ? ' in '+ it +' ms' : '';
-  var szd = $('szd'), def = $('deflated'); dt = dt ? ' in '+ dt +' ms' : '';
+  var szi = $id('szi'), inf = $id('inflated'); it = it ? ' in '+ it +' ms' : '';
+  var szd = $id('szd'), def = $id('deflated'); dt = dt ? ' in '+ dt +' ms' : '';
   szi.innerHTML = UTF8.encode(inf.value).length + it;
   szd.innerHTML = def.value.length + dt;
   
