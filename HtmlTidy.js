@@ -259,13 +259,25 @@ this.HTMLtoDOM = function( html, doc ) {
 			doc = new DOMDocument();
 		else if ( typeof document != "undefined" && document.implementation && document.implementation.createDocument )
 			doc = document.implementation.createDocument("", "", null);
-		else if ( typeof ActiveX != "undefined" )
-			doc = new ActiveXObject("Msxml.DOMDocument");
-		
-	} else
+		else if ( window.ActiveXObject ) {
+			var prefix = ["MSXML2", "Microsoft", "MSXML", "MSXML3"];
+			for(var i=0; i < prefix.length; i++){
+				try{
+					doc  = new ActiveXObject(prefix[i] + ".DOMDocument");
+					break;
+				}catch(e){
+					continue;
+				}
+			}
+		}
+
+	} else {
+
 		doc = doc.ownerDocument ||
 			doc.getOwnerDocument && doc.getOwnerDocument() ||
 			doc;
+
+	}
 	
 	var elems = [],
 		documentElement = doc.documentElement ||
@@ -473,10 +485,9 @@ function allTrue(arr) {
 function htmlEncode(str){
 	var entities = {
             '<': '&lt;',
-            '>': '&gt;',
-            '&': '&amp;'
+            '>': '&gt;'
         };
-	return str.replace(/[<>&]/g, function (m) { return entities[m]; })
+	return str.replace(/[<>]/g, function (m) { return entities[m]; });
 }
 
 function getLn(str){
@@ -531,13 +542,13 @@ function dup(arr){
 	return r;
 };
 
-/* å»é™¤æ•°ç»„é‡å¤é¡¹ */
+/* È¥³ıÊı×éÖØ¸´Ïî */
 function unique (arr) {
 	var uni = [], inUni = false;
 	uni[0] = arr[0];
 	for (var i = 1, l = arr.length; i < l; i++) {
 		inUni = false;
-		// æŸ¥çœ‹å½“å‰ç¬¬iä¸ªarrå†…å®¹æ˜¯å¦å·²å­˜åœ¨ä¸uniæ•°ç»„ä¸­
+		// ²é¿´µ±Ç°µÚi¸öarrÄÚÈİÊÇ·ñÒÑ´æÔÚÓëuniÊı×éÖĞ
 		for (var j = 0, k = uni.length; j < k; j++) {
 			if (arr[i] == uni[j]) {
 				inUni = true;
@@ -582,7 +593,7 @@ var win = window, doc = document;
 
 var result = {
 	/*
-	 * è¿”å›ç»“æœ
+	 * ·µ»Ø½á¹û
 	 * 
 	 */
 	url: '', 
@@ -666,7 +677,6 @@ tidy.catchData = function(){
 
 tidy.parse = function(){
 	data.htmlArra = data.html.split(/\n/gm);
-
 	var startBody = /<body([^>]*)>/,
 		match = data.html.match(startBody),
 		r = HTMLtoDOM(data.html.substring(data.html.indexOf('<body')+match[0].length, data.html.indexOf('</body>'))),
@@ -678,37 +688,37 @@ tidy.parse = function(){
 
 
 rulesScore = {
-	doctypeNull: {score: 1, msg: 'doctypeç¦æ­¢ä¸ºç©º'},
-	doctypeErr: {score: 1, msg: 'doctypeæ ‡ç­¾å‰ç¦æ­¢æœ‰éæ³•å­—ç¬¦'},
+	doctypeNull: {score: 1, msg: 'doctype½ûÖ¹Îª¿Õ'},
+	doctypeErr: {score: 1, msg: 'doctype±êÇ©Ç°½ûÖ¹ÓĞ·Ç·¨×Ö·û'},
 	
-	// ç¼–ç æ£€æµ‹
-	htmlEncodeNull: {score: 2.5, msg: 'æ–‡æ¡£ç¼–ç æœªè®¾ç½®'},
-	htmlEncodeErr: {score: 2.5, msg: 'æ–‡æ¡£ç¼–ç è¯·ç½®äºheadçš„ç¬¬ä¸€è¡Œ'},
-	jsEncode: {score: 2.5, msg: 'jsæœªæŒ‡å®šç¼–ç '},
-	cssEncode: {score: 2.5, msg: 'cssæœªæŒ‡å®šç¼–ç '},
+	// ±àÂë¼ì²â
+	htmlEncodeNull: {score: 2.5, msg: ' ÎÄµµ±àÂëÎ´ÉèÖÃ '},
+	htmlEncodeErr: {score: 2.5, msg: ' ÎÄµµ±àÂëÇëÖÃÓÚheadµÄµÚÒ»ĞĞ '},
+	jsEncode: {score: 2.5, msg: ' jsÎ´Ö¸¶¨±àÂë '},
+	cssEncode: {score: 2.5, msg: ' cssÎ´Ö¸¶¨±àÂë '},
 
-	// å…¶ä»–
-	httpHttps: {score: 2, msg: 'ç¦æ­¢å¼•ç”¨äº†httpèµ„æº'},
-	tagClosed: {score: 2, msg: 'æ ‡ç­¾æœªé—­åˆ'},
-	noDupId: {score: 2.5, msg: 'ç¦æ­¢ä½¿ç”¨é‡å¤id'},
-	blockInline: {score: 2.5, msg: 'ç¦æ­¢a, p, preæ ‡ç­¾ä¸­æ·»åŠ å—çº§æ ‡ç­¾'},
-	imgAlt: {score: 1.8, msg: 'æœªæŒ‡å®šaltå±æ€§'},
-	imgSize: {score: 1.8, msg: 'æœªæŒ‡å®šå›¾ç‰‡çš„å°ºå¯¸'},
+	// ÆäËû
+	httpHttps: {score: 2, msg: ' ½ûÖ¹ÒıÓÃÁËhttp×ÊÔ´ '},
+	tagClosed: {score: 2, msg: ' ±êÇ©Î´±ÕºÏ '},
+	noDupId: {score: 2.5, msg: ' ½ûÖ¹Ê¹ÓÃÖØ¸´id '},
+	blockInline: {score: 2.5, msg: ' ½ûÖ¹a, p, pre±êÇ©ÖĞÌí¼Ó¿é¼¶±êÇ© '},
+	imgAlt: {score: 1.8, msg: ' Î´Ö¸¶¨altÊôĞÔ '},
+	imgSize: {score: 1.8, msg: ' Î´Ö¸¶¨Í¼Æ¬µÄ³ß´ç '},
 
-	// è¡¨å•ç±»æ£€æµ‹
-	formInForm: {score: 3.2, msg: 'ç¦æ­¢formä¸­åµŒå¥—form'},
-	noSubmit: {score: 1.7, msg: 'formä¸­æ²¡æœ‰submit'},
-	moreSubmit: {score: 1.7, msg: 'formä¸­submitè¶…è¿‡ä¸€ä¸ª'},
-	noIdSubmit: {score: 1.5, msg: 'idçš„å€¼ä¸èƒ½ä¸º"submit"'},
-	noIdId: {score: 1.5, msg: 'idå’Œnameçš„å€¼ä¸èƒ½ä¸º"id"'},
-	noLabel: {score: 2.3, msg: 'è¯¥è¡¨å•æ§ä»¶æœªæ·»åŠ å¯¹åº”labelæ ‡ç­¾'},
+	// ±íµ¥Àà¼ì²â
+	formInForm: {score: 3.2, msg: ' ½ûÖ¹formÖĞÇ¶Ì×form '},
+	noSubmit: {score: 1.7, msg: ' formÖĞÃ»ÓĞsubmit '},
+	moreSubmit: {score: 1.7, msg: ' formÖĞsubmit³¬¹ıÒ»¸ö '},
+	noIdSubmit: {score: 1.5, msg: ' idµÄÖµ²»ÄÜÎª"submit" '},
+	noIdId: {score: 1.5, msg: ' idºÍnameµÄÖµ²»ÄÜÎª"id" '},
+	noLabel: {score: 2.3, msg: ' ¸Ã±íµ¥¿Ø¼şÎ´Ìí¼Ó¶ÔÓ¦label±êÇ© '},
 	
-	// css å’Œ js ç›¸å…³æ£€æµ‹
-	cssImport: {score: 2.7, msg: 'ç¦æ­¢@importå¯¼å…¥CSS'},
-	stylePos: {score: 2.5, msg: 'styleä½ç½®é”™è¯¯'},
-	jsInline: {score: 4.1, msg: 'è¯·ä¸è¦ä½¿ç”¨inline js'},
-	cssNum: {score: 1, msg: 'link å¼•ç”¨csså¤–éƒ¨ æ–‡ä»¶è¶…è¿‡æœ€å¤§é™åˆ¶5'},
-	jsNum: {score: 1, msg: 'script æ–‡ä»¶è¶…è¿‡æœ€å¤§é™åˆ¶5'}
+	// css ºÍ js Ïà¹Ø¼ì²â
+	cssImport: {score: 2.7, msg: ' ½ûÖ¹@importµ¼ÈëCSS '},
+	stylePos: {score: 2.5, msg: ' styleÎ»ÖÃ´íÎó '},
+	jsInline: {score: 4.1, msg: ' Çë²»ÒªÊ¹ÓÃinline js '},
+	cssNum: {score: 1, msg: ' link ÒıÓÃcssÍâ²¿ ÎÄ¼ş³¬¹ı×î´óÏŞÖÆ5 '},
+	jsNum: {score: 1, msg: ' script ÎÄ¼ş³¬¹ı×î´óÏŞÖÆ5 '}
 };
 
 tidy.checkRules = {
@@ -782,7 +792,7 @@ tidy.checkRules = {
 		var pass = true, ln,
 			links = doc.getElementsByTagName('link');
 		each(links, function(o, i){
-			if(o.getAttribute('href') && !o.getAttribute('charset')){
+			if(o.getAttribute('href') && (o.getAttribute('rel') == 'stylesheet') && !o.getAttribute('charset')){
 				ln = data.ln + elemLn(o)
 				result.errors.push({
 					'ln': ln,
@@ -847,7 +857,7 @@ tidy.checkRules = {
 		});
 		var dups = dup(ids);
 		if (dups.length != 0) {
-			//é‡å¤çš„idå€¼
+			//ÖØ¸´µÄidÖµ
 			var uid = unique(dups);
 			each(uid, function (o, i) {
 				elems = elems.concat(getElementsByAttr('id', o, data.doc.getElementsByTagName('body')[0]));
@@ -870,8 +880,8 @@ tidy.checkRules = {
 		each(['a', 'p', 'pre'], function(o,i){
 			var tag = o;
 			for(var key in block){
-				r1 = new RegExp("<" + tag + "[^>]*>([\\s\\S]*?)<\\/" + tag + "[^>]*>", "g").valueOf(); 
-				r2 = new RegExp("<" + key + "([^>]*)>").valueOf();
+				r1 = new RegExp("<" + tag + "\\s[^>]*>([\\s\\S]*?)<\\/" + tag + "[^>]*>", "g").valueOf(); 
+				r2 = new RegExp("<" + key + "\\s([^>]*)>").valueOf();
 
 				while ((sr1 = r1.exec(data.htmlStr)) != null) {
 					if ((sr2 = r2.exec(sr1[1])) !=null) {
@@ -1090,7 +1100,7 @@ tidy.checkRules = {
 	},
 	
 	checkJsInline: function(){
-		var pass = true, ln, sr, r = /[^<]*(data-ht="\d{1,2}")?onclick[^>]*(data-ht="\d{1,2}")?/g;
+		var pass = true, ln, sr, r = /[^<]*(data-ht="\d+"\s)onclick[^>]*|[^<]*onclick[^>]*(data-ht="\d+")/g;
 		while( (sr = r.exec(data.htmlStr)) !=null ){
 			sr = sr[1] ? sr[1] : sr[2];
 			ln = getLn(data.htmlStr.substring(0, data.htmlStr.indexOf(sr))) + data.ln;
@@ -1107,7 +1117,7 @@ tidy.checkRules = {
 	},
 
 	checkcssNum: function(){
-		if( data.jsnum > 5 ){
+		if( data.cssnum > 5 ){
 			result.errors.push({
 				'ln' : '',
 				'code': '',
@@ -1185,7 +1195,7 @@ tidy.generateData = function(){
 };
 tidy.sendResult=function(str) {
 	/*
-	 * tidyResult.gif é¡µé¢åˆæ¬¡è½½å…¥æ—¶,å‘é€çš„æ•°æ®
+	 * tidyResult.gif Ò³Ãæ³õ´ÎÔØÈëÊ±,·¢ËÍµÄÊı¾İ
 	 * 
 	 * @params
 	 * URL:"http://www.alipay.com/i.htm",
@@ -1200,9 +1210,9 @@ tidy.sendResult=function(str) {
 	 * I:img urls
 	 */
 	var _sampleResult={
-		URL:"http://www.alipay.com/i.htm",	//å½“å‰url
+		URL:"http://www.alipay.com/i.htm",	//µ±Ç°url
 		A:"Mozilla 20110318052756 5.0 (Macintosh)", //user Agent
-		TE:[ //tidy erroræ ¡éªŒè§„åˆ™
+		TE:[ //tidy errorĞ£Ñé¹æÔò
 			{
 				id:2,
 				ln:56,
@@ -1268,30 +1278,30 @@ tidy.sendResult=function(str) {
 		J:url.js,
 		I:url.img
 	};
-//	console.log(compress(encodeURI(obj2str(_sampleResult))));
+	console.log(compress(encodeURI(obj2str(_sampleResult))));
 	console.log(_sampleResult);
 	
-	var _tUrl="http://ecmng.sit.alipay.net:7788/"+"?"+encodeURI(compress(obj2str(_sampleResult)));
+	var _tUrl="http://ecmng.sit.alipay.net:7788/"+"?"+encodeURI(_sampleResult);
 	console.log(_tUrl);
 	
 	if(true){
-		//jsonpå‘é€
+		//jsonp·¢ËÍ
 		jsonp(_tUrl);
 	}else{
-		//formå‘é€
+		//form·¢ËÍ
 		//sendForm(obj2str(_sampleResult));
 	}
 	
 	
 	/*
-	 * ErrorResult è„šæœ¬å¼‚å¸¸æ—¶,å‘é€çš„æ•°æ®
+	 * ErrorResult ½Å±¾Òì³£Ê±,·¢ËÍµÄÊı¾İ
 	 *
 	 * @params
 	 * URL:location href
 	 * UA:user agent
-	 * msg:é¡µé¢é”™è¯¯ä¿¡æ¯
-	 * file:æ–‡ä»¶
-	 * ln:é”™è¯¯è¡Œå·
+	 * msg:Ò³Ãæ´íÎóĞÅÏ¢
+	 * file:ÎÄ¼ş
+	 * ln:´íÎóĞĞºÅ
 	 * id:identify this error
 	 */
 	
