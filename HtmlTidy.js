@@ -61,7 +61,7 @@ var HTMLParser = this.HTMLParser = function( html, handler ) {
 			return this[ len - 1 ][0];
 		}
 	};
-
+	//debugger;
 	while ( html ) {
 		chars = true;
 
@@ -144,7 +144,7 @@ var HTMLParser = this.HTMLParser = function( html, handler ) {
 	}
 	
 	// Clean up any remaining tags
-	parseEndTag();
+	if(stack.length) parseEndTag();
 
 	function parseStartTag( tag, tagName, rest, unary ) {
 		if ( block[ tagName ] ) {
@@ -253,7 +253,6 @@ this.HTMLtoDOM = function( html, doc ) {
 		link: "head",
 		base: "head"
 	};
-
 	if ( !doc ) {
 		if ( typeof DOMDocument != "undefined" )
 			doc = new DOMDocument();
@@ -280,12 +279,16 @@ this.HTMLtoDOM = function( html, doc ) {
 	}
 	
 	var elems = [],
-		documentElement = doc.documentElement ||
-			doc.getDocumentElement && doc.getDocumentElement();
+		documentElement = doc.documentElement || doc.getDocumentElement && doc.getDocumentElement();
 			
 	// If we're dealing with an empty document then we
 	// need to pre-populate it with the HTML document structure
-	if ( !documentElement && doc.createElement ) (function(){
+	
+
+	/*	IE6 docå¯¹è±¡è™½ç„¶æœ‰createElementæ–¹æ³•ï¼Œä½†ä¸èƒ½ç›´æ¥doc.createElement, é”™è¯¯ï¼šé”™è¯¯çš„å‚æ•°ä¸ªæ•°æˆ–æ— æ•ˆçš„å‚æ•°å±æ€§å€¼ 
+	 * */
+	//if ( !documentElement && doc.createElement ) (function(){
+	if ( !documentElement ) (function(){
 		var html = doc.createElement("html");
 		var head = doc.createElement("head");
 		head.appendChild( doc.createElement("title") );
@@ -295,9 +298,10 @@ this.HTMLtoDOM = function( html, doc ) {
 	})();
 	
 	// Find all the unique elements
-	if ( doc.getElementsByTagName )
-		for ( var i in one )
-			one[ i ] = doc.getElementsByTagName( i )[0];
+	// é”™è¯¯åŒä¸Š
+	// if ( doc.getElementsByTagName )
+	for ( var i in one )
+		one[ i ] = doc.getElementsByTagName( i )[0];
 	
 	// If we're working with a document, inject contents into
 	// the body element
@@ -334,7 +338,8 @@ this.HTMLtoDOM = function( html, doc ) {
 			if ( structure[ tagName ] && typeof one[ structure[ tagName ] ] != "boolean" )
 				one[ structure[ tagName ] ].appendChild( elem );
 			
-			else if ( curParentNode && curParentNode.appendChild )
+			//else if ( curParentNode && curParentNode.appendChild )
+			else if ( curParentNode )
 				curParentNode.appendChild( elem );
 				
 			if ( !unary ) {
@@ -388,6 +393,51 @@ function makeMap(str){
  *Utility
  *
  * */
+function exec(text){
+	if(window.execScript){
+		window.execScript(text);
+		return  text;
+	} 
+	window.eval.call(window,text);//åˆ©ç”¨callæ¥æ”¹å˜evalæ‰§è¡Œçš„ç¯å¢ƒ,ä½†æ­¤æ–¹æ³•åœ¨ieä¸­æ— æ•ˆï¼Œä¸çŸ¥é“ä¸ºå•¥
+	return text;
+}
+
+function gb2utf8(key)
+{
+	var r = "";
+	for(var i=0;i<key.length;i++){
+		var t = key.charCodeAt(i);
+		if(t>=0x4e00 || t==0x300A || t==0x300B){
+			try{
+				execScript("ascCode=hex(asc(\""+key.charAt(i)+"\"))", "vbscript"); r += ascCode.replace(/(.{2})/g, "%$1"); 
+			} catch(e) {}
+		} else {
+			r += escape(key.charAt(i))
+		}
+	}
+	return r;
+}
+
+/*function gb2utf8(data){  
+	var glbEncode = [];  
+	gb2utf8_data = data;  
+	exec("gb2utf8_data = MidB(gb2utf8_data, 1)", "VBScript");  
+	var t=escape(gb2utf8_data).replace(/%u/g,"").replace(/(.{2})(.{2})/g,"%$2%$1").replace(/%([A-Z].)%(.{2})/g,"@$1$2");  
+	t=t.split("@");  
+	var i=0,j=t.length,k;  
+	while(++i<j){  
+		k=t[i].substring(0,4);  
+		if(!glbEncode[k]) {  
+			gb2utf8_char = eval("0x"+k);  
+			exec("gb2utf8_char = Chr(gb2utf8_char)", "VBScript");  
+			glbEncode[k]=escape(gb2utf8_char).substring(1,6);  
+		}  
+		t[i]=glbEncode[k]+t[i].substring(4);  
+	}  
+	gb2utf8_data = gb2utf8_char = null;  
+	return unescape(t.join("%"));  
+}*/
+
 function extend(){ 
 	if (arguments[1]) {
 		for (var key in arguments[1]) {
@@ -425,7 +475,7 @@ function ajax(option) {
 	xhr.open (opt.type, opt.url, opt.async);
 	if (opt.type == 'POST') {
 		xhr.setRequestHeader('Content-type','application/x-www-form-urlencoded');
-	}
+	} 
 	xhr.onreadystatechange = function() {
 
 		if ( xhr.readyState == 4 ) {
@@ -542,13 +592,13 @@ function dup(arr){
 	return r;
 };
 
-/* È¥³ıÊı×éÖØ¸´Ïî */
+/* å»é™¤æ•°ç»„é‡å¤é¡¹ */
 function unique (arr) {
 	var uni = [], inUni = false;
 	uni[0] = arr[0];
 	for (var i = 1, l = arr.length; i < l; i++) {
 		inUni = false;
-		// ²é¿´µ±Ç°µÚi¸öarrÄÚÈİÊÇ·ñÒÑ´æÔÚÓëuniÊı×éÖĞ
+		// æŸ¥çœ‹å½“å‰ç¬¬iä¸ªarrå†…å®¹æ˜¯å¦å·²å­˜åœ¨ä¸uniæ•°ç»„ä¸­
 		for (var j = 0, k = uni.length; j < k; j++) {
 			if (arr[i] == uni[j]) {
 				inUni = true;
@@ -593,7 +643,7 @@ var win = window, doc = document;
 
 var result = {
 	/*
-	 * ·µ»Ø½á¹û
+	 * è¿”å›ç»“æœ
 	 * 
 	 */
 	url: '', 
@@ -639,8 +689,10 @@ tidy.getHtml = function(){
 tidy.getJs = function(){
 	var scripts = doc.getElementsByTagName('script');
 	each(scripts, function(o, i){
-		url.js.push(o.src);
-		data.jsnum ++;
+		if(o.src != ''){
+			url.js.push(o.src);
+			data.jsnum ++;
+		}
 	});
 };
 
@@ -681,44 +733,45 @@ tidy.parse = function(){
 		match = data.html.match(startBody),
 		r = HTMLtoDOM(data.html.substring(data.html.indexOf('<body')+match[0].length, data.html.indexOf('</body>'))),
 		ln = data.html.substring(0, data.html.indexOf('<body')+match[0].length).match(/\n/g).length;
-	data.ln = ln;
+	data.ln = ln+1;
 	data.htmlStr = r.html;
 	data.doc = r.doc;
+	//alert(gb2utf8(data.html));
 }
 
 
 rulesScore = {
-	doctypeNull: {score: 1, msg: 'doctype½ûÖ¹Îª¿Õ'},
-	doctypeErr: {score: 1, msg: 'doctype±êÇ©Ç°½ûÖ¹ÓĞ·Ç·¨×Ö·û'},
+	doctypeNull: {score: 1, msg: 'doctypeç¦æ­¢ä¸ºç©º'},
+	doctypeErr: {score: 1, msg: 'doctypeæ ‡ç­¾å‰ç¦æ­¢æœ‰éæ³•å­—ç¬¦'},
 	
-	// ±àÂë¼ì²â
-	htmlEncodeNull: {score: 2.5, msg: ' ÎÄµµ±àÂëÎ´ÉèÖÃ '},
-	htmlEncodeErr: {score: 2.5, msg: ' ÎÄµµ±àÂëÇëÖÃÓÚheadµÄµÚÒ»ĞĞ '},
-	jsEncode: {score: 2.5, msg: ' jsÎ´Ö¸¶¨±àÂë '},
-	cssEncode: {score: 2.5, msg: ' cssÎ´Ö¸¶¨±àÂë '},
+	// ç¼–ç æ£€æµ‹
+	htmlEncodeNull: {score: 2.5, msg: ' æ–‡æ¡£ç¼–ç æœªè®¾ç½® '},
+	htmlEncodeErr: {score: 2.5, msg: ' æ–‡æ¡£ç¼–ç è¯·ç½®äºheadçš„ç¬¬ä¸€è¡Œ '},
+	jsEncode: {score: 2.5, msg: ' jsæœªæŒ‡å®šç¼–ç  '},
+	cssEncode: {score: 2.5, msg: ' cssæœªæŒ‡å®šç¼–ç  '},
 
-	// ÆäËû
-	httpHttps: {score: 2, msg: ' ½ûÖ¹ÒıÓÃÁËhttp×ÊÔ´ '},
-	tagClosed: {score: 2, msg: ' ±êÇ©Î´±ÕºÏ '},
-	noDupId: {score: 2.5, msg: ' ½ûÖ¹Ê¹ÓÃÖØ¸´id '},
-	blockInline: {score: 2.5, msg: ' ½ûÖ¹a, p, pre±êÇ©ÖĞÌí¼Ó¿é¼¶±êÇ© '},
-	imgAlt: {score: 1.8, msg: ' Î´Ö¸¶¨altÊôĞÔ '},
-	imgSize: {score: 1.8, msg: ' Î´Ö¸¶¨Í¼Æ¬µÄ³ß´ç '},
+	// å…¶ä»–
+	httpHttps: {score: 2, msg: ' ç¦æ­¢å¼•ç”¨äº†httpèµ„æº '},
+	tagClosed: {score: 2, msg: ' æ ‡ç­¾æœªé—­åˆ '},
+	noDupId: {score: 2.5, msg: ' ç¦æ­¢ä½¿ç”¨é‡å¤id '},
+	blockInline: {score: 2.5, msg: ' ç¦æ­¢a, p, preæ ‡ç­¾ä¸­æ·»åŠ å—çº§æ ‡ç­¾ '},
+	imgAlt: {score: 1.8, msg: ' æœªæŒ‡å®šaltå±æ€§ '},
+	imgSize: {score: 1.8, msg: ' æœªæŒ‡å®šå›¾ç‰‡çš„å°ºå¯¸ '},
 
-	// ±íµ¥Àà¼ì²â
-	formInForm: {score: 3.2, msg: ' ½ûÖ¹formÖĞÇ¶Ì×form '},
-	noSubmit: {score: 1.7, msg: ' formÖĞÃ»ÓĞsubmit '},
-	moreSubmit: {score: 1.7, msg: ' formÖĞsubmit³¬¹ıÒ»¸ö '},
-	noIdSubmit: {score: 1.5, msg: ' idµÄÖµ²»ÄÜÎª"submit" '},
-	noIdId: {score: 1.5, msg: ' idºÍnameµÄÖµ²»ÄÜÎª"id" '},
-	noLabel: {score: 2.3, msg: ' ¸Ã±íµ¥¿Ø¼şÎ´Ìí¼Ó¶ÔÓ¦label±êÇ© '},
+	// è¡¨å•ç±»æ£€æµ‹
+	formInForm: {score: 3.2, msg: ' ç¦æ­¢formä¸­åµŒå¥—form '},
+	noSubmit: {score: 1.7, msg: ' formä¸­æ²¡æœ‰submit '},
+	moreSubmit: {score: 1.7, msg: ' formä¸­submitè¶…è¿‡ä¸€ä¸ª '},
+	noIdSubmit: {score: 1.5, msg: ' idçš„å€¼ä¸èƒ½ä¸º"submit" '},
+	noIdId: {score: 1.5, msg: ' idå’Œnameçš„å€¼ä¸èƒ½ä¸º"id" '},
+	noLabel: {score: 2.3, msg: ' è¯¥è¡¨å•æ§ä»¶æœªæ·»åŠ å¯¹åº”labelæ ‡ç­¾ '},
 	
-	// css ºÍ js Ïà¹Ø¼ì²â
-	cssImport: {score: 2.7, msg: ' ½ûÖ¹@importµ¼ÈëCSS '},
-	stylePos: {score: 2.5, msg: ' styleÎ»ÖÃ´íÎó '},
-	jsInline: {score: 4.1, msg: ' Çë²»ÒªÊ¹ÓÃinline js '},
-	cssNum: {score: 1, msg: ' link ÒıÓÃcssÍâ²¿ ÎÄ¼ş³¬¹ı×î´óÏŞÖÆ5 '},
-	jsNum: {score: 1, msg: ' script ÎÄ¼ş³¬¹ı×î´óÏŞÖÆ5 '}
+	// css å’Œ js ç›¸å…³æ£€æµ‹
+	cssImport: {score: 2.7, msg: ' ç¦æ­¢@importå¯¼å…¥CSS '},
+	stylePos: {score: 2.5, msg: ' styleä½ç½®é”™è¯¯ '},
+	jsInline: {score: 4.1, msg: ' è¯·ä¸è¦ä½¿ç”¨inline js '},
+	cssNum: {score: 1, msg: ' link å¼•ç”¨csså¤–éƒ¨ æ–‡ä»¶è¶…è¿‡æœ€å¤§é™åˆ¶5 '},
+	jsNum: {score: 1, msg: ' script æ–‡ä»¶è¶…è¿‡æœ€å¤§é™åˆ¶5 '}
 };
 
 tidy.checkRules = {
@@ -857,7 +910,7 @@ tidy.checkRules = {
 		});
 		var dups = dup(ids);
 		if (dups.length != 0) {
-			//ÖØ¸´µÄidÖµ
+			//é‡å¤çš„idå€¼
 			var uid = unique(dups);
 			each(uid, function (o, i) {
 				elems = elems.concat(getElementsByAttr('id', o, data.doc.getElementsByTagName('body')[0]));
@@ -1195,7 +1248,7 @@ tidy.generateData = function(){
 };
 tidy.sendResult=function(str) {
 	/*
-	 * tidyResult.gif Ò³Ãæ³õ´ÎÔØÈëÊ±,·¢ËÍµÄÊı¾İ
+	 * tidyResult.gif é¡µé¢åˆæ¬¡è½½å…¥æ—¶,å‘é€çš„æ•°æ®
 	 * 
 	 * @params
 	 * URL:"http://www.alipay.com/i.htm",
@@ -1210,9 +1263,9 @@ tidy.sendResult=function(str) {
 	 * I:img urls
 	 */
 	var _sampleResult={
-		URL:"http://www.alipay.com/i.htm",	//µ±Ç°url
+		URL:"http://www.alipay.com/i.htm",	//å½“å‰url
 		A:"Mozilla 20110318052756 5.0 (Macintosh)", //user Agent
-		TE:[ //tidy errorĞ£Ñé¹æÔò
+		TE:[ //tidy erroræ ¡éªŒè§„åˆ™
 			{
 				id:2,
 				ln:56,
@@ -1278,30 +1331,35 @@ tidy.sendResult=function(str) {
 		J:url.js,
 		I:url.img
 	};
-	console.log(compress(encodeURI(obj2str(_sampleResult))));
-	console.log(_sampleResult);
+	//console.log(compress(encodeURI(obj2str(_sampleResult))));
+	//console.log(_sampleResult);
+	var str = obj2str(_sampleResult);
+	str = encodeURI(str);
+	str = compress(str);
+
+	alert(str);	
 	
 	var _tUrl="http://ecmng.sit.alipay.net:7788/"+"?"+encodeURI(_sampleResult);
-	console.log(_tUrl);
+	//console.log(_tUrl);
 	
 	if(true){
-		//jsonp·¢ËÍ
+		//jsonpå‘é€
 		jsonp(_tUrl);
 	}else{
-		//form·¢ËÍ
+		//formå‘é€
 		//sendForm(obj2str(_sampleResult));
 	}
 	
 	
 	/*
-	 * ErrorResult ½Å±¾Òì³£Ê±,·¢ËÍµÄÊı¾İ
+	 * ErrorResult è„šæœ¬å¼‚å¸¸æ—¶,å‘é€çš„æ•°æ®
 	 *
 	 * @params
 	 * URL:location href
 	 * UA:user agent
-	 * msg:Ò³Ãæ´íÎóĞÅÏ¢
-	 * file:ÎÄ¼ş
-	 * ln:´íÎóĞĞºÅ
+	 * msg:é¡µé¢é”™è¯¯ä¿¡æ¯
+	 * file:æ–‡ä»¶
+	 * ln:é”™è¯¯è¡Œå·
 	 * id:identify this error
 	 */
 	
