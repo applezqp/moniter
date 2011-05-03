@@ -412,31 +412,11 @@ function gb2utf8(key)
 				execScript("ascCode=hex(asc(\""+key.charAt(i)+"\"))", "vbscript"); r += ascCode.replace(/(.{2})/g, "%$1"); 
 			} catch(e) {}
 		} else {
-			r += escape(key.charAt(i))
+			//r += escape(key.charAt(i))
 		}
 	}
 	return r;
 }
-
-/*function gb2utf8(data){  
-	var glbEncode = [];  
-	gb2utf8_data = data;  
-	exec("gb2utf8_data = MidB(gb2utf8_data, 1)", "VBScript");  
-	var t=escape(gb2utf8_data).replace(/%u/g,"").replace(/(.{2})(.{2})/g,"%$2%$1").replace(/%([A-Z].)%(.{2})/g,"@$1$2");  
-	t=t.split("@");  
-	var i=0,j=t.length,k;  
-	while(++i<j){  
-		k=t[i].substring(0,4);  
-		if(!glbEncode[k]) {  
-			gb2utf8_char = eval("0x"+k);  
-			exec("gb2utf8_char = Chr(gb2utf8_char)", "VBScript");  
-			glbEncode[k]=escape(gb2utf8_char).substring(1,6);  
-		}  
-		t[i]=glbEncode[k]+t[i].substring(4);  
-	}  
-	gb2utf8_data = gb2utf8_char = null;  
-	return unescape(t.join("%"));  
-}*/
 
 function extend(){ 
 	if (arguments[1]) {
@@ -475,7 +455,9 @@ function ajax(option) {
 	xhr.open (opt.type, opt.url, opt.async);
 	if (opt.type == 'POST') {
 		xhr.setRequestHeader('Content-type','application/x-www-form-urlencoded');
-	} 
+	}else{ 
+		xhr.setRequestHeader( "Content-Type", "text/html;charset=GB2312" )
+	}
 	xhr.onreadystatechange = function() {
 
 		if ( xhr.readyState == 4 ) {
@@ -733,10 +715,11 @@ tidy.parse = function(){
 		match = data.html.match(startBody),
 		r = HTMLtoDOM(data.html.substring(data.html.indexOf('<body')+match[0].length, data.html.indexOf('</body>'))),
 		ln = data.html.substring(0, data.html.indexOf('<body')+match[0].length).match(/\n/g).length;
-	data.ln = ln+1;
+	data.ln = ln;
 	data.htmlStr = r.html;
 	data.doc = r.doc;
 	//alert(gb2utf8(data.html));
+	//alert(data.html);
 }
 
 
@@ -1337,7 +1320,6 @@ tidy.sendResult=function(str) {
 	str = encodeURI(str);
 	str = compress(str);
 
-	alert(str);	
 	
 	var _tUrl="http://ecmng.sit.alipay.net:7788/"+"?"+encodeURI(_sampleResult);
 	//console.log(_tUrl);
